@@ -1,0 +1,18 @@
+{
+    "challenge_module": "Challenge.Basic",
+    "solution_module": "Solution.Basic",
+    "theorem_names": [
+        "PCError.Challenge.thm_error_decomp",
+        "PCError.Challenge.thm_oos_estimable",
+        "PCError.Challenge.thm_error_floor",
+        "PCError.Challenge.thm_data_invariant",
+        "PCError.Challenge.thm_rotation_surjective",
+        "PCError.Challenge.thm_error_range"
+    ],
+    "permitted_axioms": [
+        "propext",
+        "Quot.sound",
+        "Classical.choice"
+    ],
+    "enable_nanoda": true
+}
