@@ -11,6 +11,8 @@ public import Mathlib.Probability.Independence.Integration
 public import PCError.Attr
 public import PCError.Defs.TheFactorModelAndItsDerivedMatrices
 public import PCError.MatrixPreliminaries
+public import PCError.SLLN.Basic
+public import PCError.Weyl.Basic
 
 /-!
 # The observable dual Gram matrix in the limit
@@ -103,21 +105,19 @@ attribute [local instance] Matrix.instL2OpNormedAddCommGroup
 variable {m : Type u} [Fintype m] [DecidableEq m] {A : ℕ → Matrix m m ℝ} {A₀ : Matrix m m ℝ}
 
 /-- Each ordered eigenvalue is continuous along a convergent sequence of real symmetric
-matrices: an immediate consequence of Weyl's inequality (`hweyl`). -/
-theorem tendsto_eigenvalues₀ (hweyl : WeylPerturbation.{u})
-    (hA : ∀ p, (A p).IsHermitian) (hA₀ : A₀.IsHermitian)
+matrices: an immediate consequence of Weyl's inequality. -/
+theorem tendsto_eigenvalues₀ (hA : ∀ p, (A p).IsHermitian) (hA₀ : A₀.IsHermitian)
     (hconv : Tendsto A atTop (𝓝 A₀)) (i : Fin (Fintype.card m)) :
     Tendsto (fun p => (hA p).eigenvalues₀ i) atTop (𝓝 (hA₀.eigenvalues₀ i)) := by
   refine tendsto_iff_dist_tendsto_zero.2
     (squeeze_zero (fun p => dist_nonneg) (fun p => ?_) (tendsto_l2_opNorm_sub_zero hconv))
   rw [Real.dist_eq]
-  exact hweyl hA₀ (hA p) i
+  exact weylPerturbation.{u} hA₀ (hA p) i
 
 /-- An eigenvalue of `A p` converging to a *simple* eigenvalue `ζ` of the limit `A₀` is eventually
 the eigenvalue Weyl's inequality keeps at the same place in the ordered listing.  Simplicity is
 spelled out as `ζ` occurring exactly once, at `i₀`, in the ordered listing of `A₀`. -/
-theorem eventually_eq_eigenvalues₀ (hweyl : WeylPerturbation.{u})
-    (hA : ∀ p, (A p).IsHermitian) (hA₀ : A₀.IsHermitian)
+theorem eventually_eq_eigenvalues₀ (hA : ∀ p, (A p).IsHermitian) (hA₀ : A₀.IsHermitian)
     (hconv : Tendsto A atTop (𝓝 A₀)) {ζ : ℝ} {i₀ : Fin (Fintype.card m)}
     (huniq : ∀ i, hA₀.eigenvalues₀ i = ζ → i = i₀)
     {x : ℕ → ℝ} (hx : Tendsto x atTop (𝓝 ζ))
@@ -125,7 +125,7 @@ theorem eventually_eq_eigenvalues₀ (hweyl : WeylPerturbation.{u})
     ∀ᶠ p in atTop, x p = (hA p).eigenvalues₀ i₀ := by
   obtain ⟨γ, hγpos, hgap⟩ := exists_pos_two_mul_le_abs_sub (c := hA₀.eigenvalues₀) huniq
   have hweyl' : ∀ p j, |(hA p).eigenvalues₀ j - hA₀.eigenvalues₀ j| ≤ ‖A p - A₀‖ :=
-    fun p => hweyl hA₀ (hA p)
+    fun p => weylPerturbation.{u} hA₀ (hA p)
   have hev : ∀ᶠ p in atTop, ‖A p - A₀‖ < γ :=
     (tendsto_l2_opNorm_sub_zero hconv).eventually_lt_const hγpos
   have hxnear : ∀ᶠ p in atTop, |x p - ζ| < γ := by
@@ -698,13 +698,12 @@ private theorem summable_div_add_one_sq {v : ℕ → ℝ} {C : ℝ} (hv : ∀ i,
 The summands `Z_{i,ℓ}Z_{i,m}` are independent — this is `PCError.FactorModelSeq.iIndepFun_row`
 followed by the measurable map `v ↦ v_ℓ v_m` — lie in `L²` by Hölder, and have variance at most
 the fourth-moment bound `κ₄`, since `(xy)² ≤ (x⁴ + y⁴)/2` pointwise.  So
-`∑ᵢ Var(Z_{i,ℓ}Z_{i,m})/(i+1)² ≤ κ₄ ∑ᵢ (i+1)^{-2} < ∞` and the assumed strong law `hslln`
-applies.  The mean of the summand is `δ²_{i,ℓ}` on
+`∑ᵢ Var(Z_{i,ℓ}Z_{i,m})/(i+1)² ≤ κ₄ ∑ᵢ (i+1)^{-2} < ∞` and the strong law applies.  The mean of
+the summand is `δ²_{i,ℓ}` on
 the diagonal, because `Z_{i,ℓ}` has mean zero, and `0` off it, because `Z_{i,ℓ}` and `Z_{i,m}` are
 independent; the diagonal Cesàro limit is then the asymptotic hypothesis
 `PCError.AsymptoticHypotheses.tendsto_variance_Z`. -/
-private theorem ae_tendsto_gram_entry (hslln : KolmogorovSLLN.{u})
-    (hyp : AsymptoticHypotheses μ M G lam) (ℓ m : Fin M.n) :
+private theorem ae_tendsto_gram_entry (hyp : AsymptoticHypotheses μ M G lam) (ℓ m : Fin M.n) :
     ∀ᵐ ω ∂μ, Tendsto (fun p : ℕ => (p : ℝ)⁻¹ * ∑ i ∈ Finset.range p, M.Z i ℓ ω * M.Z i m ω)
       atTop (𝓝 (if ℓ = m then M.δsq else 0)) := by
   classical
@@ -742,7 +741,7 @@ private theorem ae_tendsto_gram_entry (hslln : KolmogorovSLLN.{u})
     split_ifs with hlm
     · exact hyp.tendsto_variance_Z ℓ
     · simp
-  filter_upwards [hslln
+  filter_upwards [kolmogorovSLLN.{u}
     (fun i ω => M.Z i ℓ ω * M.Z i m ω) hL2 hindX hsummable] with ω hω
   have h3 := hω.add h2
   rw [zero_add] at h3
@@ -757,8 +756,7 @@ almost-sure convergence of matrices of fixed size is convergence of the matrices
 intersection of finitely many almost-sure events is almost sure.  Each entry is
 `PCError.FactorModelSeq.ae_tendsto_gram_entry`, divided by `n`. -/
 @[pcerror "lem_noise_gram"]
-theorem ae_tendsto_gram_noiseMatrix (hslln : KolmogorovSLLN.{u})
-    (hyp : AsymptoticHypotheses μ M G lam) :
+theorem ae_tendsto_gram_noiseMatrix (hyp : AsymptoticHypotheses μ M G lam) :
     ∀ᵐ ω ∂μ, Tendsto (fun p : ℕ =>
         ((M.n : ℝ) * p)⁻¹ • ((M.noiseMatrix p ω)ᵀ * M.noiseMatrix p ω))
       atTop (𝓝 ((M.δsq / M.n) • (1 : Matrix (Fin M.n) (Fin M.n) ℝ))) := by
@@ -769,7 +767,7 @@ theorem ae_tendsto_gram_noiseMatrix (hslln : KolmogorovSLLN.{u})
     rw [ae_all_iff]
     intro ℓ
     rw [ae_all_iff]
-    exact M.ae_tendsto_gram_entry hslln hyp ℓ
+    exact M.ae_tendsto_gram_entry hyp ℓ
   filter_upwards [hall] with ω hω
   refine tendsto_pi_nhds.2 fun ℓ => tendsto_pi_nhds.2 fun m => ?_
   have h := (hω ℓ m).const_mul ((M.n : ℝ)⁻¹)
@@ -1055,11 +1053,10 @@ The systematic block is `n⁻¹(Φ̄⁽ᵖ⁾)ᵀΦ̄⁽ᵖ⁾ → n⁻¹(Φ̄^�
 a convergent factor with `p^(-1/2)(b⁽ᵖ⁾)ᵀZ⁽ᵖ⁾ → 0` and hence vanishes, and the noise block tends to
 `(δ²/n)Iₙ`. -/
 @[pcerror "prop_dual_conv"]
-theorem ae_tendsto_dualGram (hslln : KolmogorovSLLN.{u})
-    (hyp : StandingHypotheses μ M G lam) :
+theorem ae_tendsto_dualGram (hyp : StandingHypotheses μ M G lam) :
     ∀ᵐ ω ∂μ, Tendsto (fun p : ℕ => M.dualGram p ω) atTop (𝓝 (M.dualGramLim G)) := by
   filter_upwards [M.ae_tendsto_transpose_b_mul_noiseMatrix hyp.toAsymptoticHypotheses,
-    M.ae_tendsto_gram_noiseMatrix hslln hyp.toAsymptoticHypotheses] with ω hC hZ
+    M.ae_tendsto_gram_noiseMatrix hyp.toAsymptoticHypotheses] with ω hC hZ
   have hS := hyp.tendsto_scaledScores
   have key := ((((tendsto_matrix_mul (tendsto_matrix_transpose hS) hS).add
     (tendsto_matrix_mul (tendsto_matrix_transpose hS) hC)).add
@@ -1079,12 +1076,11 @@ theorem ae_tendsto_dualGram (hslln : KolmogorovSLLN.{u})
 Weyl's inequality makes each ordered eigenvalue continuous along `W⁽ᵖ⁾ → W`, and the `j`-th
 ordered eigenvalue of `W` is `λⱼ + δ²/n`. -/
 @[pcerror "prop_theta_limit"]
-theorem ae_tendsto_dualEigenvalues (hslln : KolmogorovSLLN.{u}) (hweyl : WeylPerturbation.{0})
-    (hyp : StandingHypotheses μ M G lam) (j : Fin M.k) :
+theorem ae_tendsto_dualEigenvalues (hyp : StandingHypotheses μ M G lam) (j : Fin M.k) :
     ∀ᵐ ω ∂μ, Tendsto (fun p : ℕ => M.dualEigenvalues p ω (Fin.castLE M.k_lt_n.le j)) atTop
       (𝓝 (lam j + M.δsq / M.n)) := by
-  filter_upwards [M.ae_tendsto_dualGram hslln hyp] with ω hω
-  have h := tendsto_eigenvalues₀ hweyl (fun p => M.dualGram_isHermitian p ω)
+  filter_upwards [M.ae_tendsto_dualGram hyp] with ω hω
+  have h := tendsto_eigenvalues₀ (fun p => M.dualGram_isHermitian p ω)
     (M.dualGramLim_isHermitian hyp.G_posDef.isHermitian) hω
     (Fin.cast (Fintype.card_fin M.n).symm (Fin.castLE M.k_lt_n.le j))
   rw [M.eigenvalues₀_dualGramLim hyp.G_posDef.posSemidef hyp.hasPosEigenvalues_dualGramLim₀] at h
@@ -1108,11 +1104,10 @@ Each of the `n - k` bulk eigenvalues `θ⁽ᵖ⁾ᵢ`, `i > k`, tends to the `i`
 `δ²/n` of `W`, and an average of finitely many convergent sequences converges to the average of
 the limits. -/
 @[pcerror "prop_bulk_limit"]
-theorem ae_tendsto_avgBulkEigenvalue (hslln : KolmogorovSLLN.{u}) (hweyl : WeylPerturbation.{0})
-    (hyp : StandingHypotheses μ M G lam) :
+theorem ae_tendsto_avgBulkEigenvalue (hyp : StandingHypotheses μ M G lam) :
     ∀ᵐ ω ∂μ, Tendsto (fun p : ℕ => M.avgBulkEigenvalue p ω) atTop (𝓝 (M.δsq / M.n)) := by
   classical
-  filter_upwards [M.ae_tendsto_dualGram hslln hyp] with ω hω
+  filter_upwards [M.ae_tendsto_dualGram hyp] with ω hω
   set s := Finset.univ.filter fun i : Fin M.n => M.k ≤ (i : ℕ) with hs
   have hcard : s.card = M.n - M.k := by
     have hIci : s = Finset.Ici (⟨M.k, M.k_lt_n⟩ : Fin M.n) := by
@@ -1122,7 +1117,7 @@ theorem ae_tendsto_avgBulkEigenvalue (hslln : KolmogorovSLLN.{u}) (hweyl : WeylP
       Tendsto (fun p : ℕ => M.dualEigenvalues p ω i) atTop (𝓝 (M.δsq / M.n)) := by
     intro i hi
     have hik : ¬ ((i : ℕ) < M.k) := by simp only [hs, Finset.mem_filter] at hi; omega
-    have h := tendsto_eigenvalues₀ hweyl (fun p => M.dualGram_isHermitian p ω)
+    have h := tendsto_eigenvalues₀ (fun p => M.dualGram_isHermitian p ω)
       (M.dualGramLim_isHermitian hyp.G_posDef.isHermitian) hω
       (Fin.cast (Fintype.card_fin M.n).symm i)
     rw [M.eigenvalues₀_dualGramLim hyp.G_posDef.posSemidef hyp.hasPosEigenvalues_dualGramLim₀,
@@ -1148,8 +1143,7 @@ The eigenvalue `λⱼ + δ²/n` of `W` is simple with eigenvector `wⱼ`, so eig
 simple eigenvalue applies along `W⁽ᵖ⁾ → W`; the simple eigenvalue it produces is eventually
 `θ⁽ᵖ⁾ⱼ` itself, because the eigenvalues of `W` are separated. -/
 @[pcerror "prop_w_limit"]
-theorem ae_tendsto_abs_inner_dualEigenvector (hslln : KolmogorovSLLN.{u})
-    (hweyl : WeylPerturbation.{0}) (hyp : StandingHypotheses μ M G lam) (j : Fin M.k)
+theorem ae_tendsto_abs_inner_dualEigenvector (hyp : StandingHypotheses μ M G lam) (j : Fin M.k)
     {w : EuclideanSpace ℝ (Fin M.n)} (hw1 : ‖w‖ = 1)
     (hw : M.dualGramLim₀ G *ᵥ w = lam j • w) :
     ∀ᵐ ω ∂μ, ∀ u : ℕ → EuclideanSpace ℝ (Fin M.n),
@@ -1183,15 +1177,15 @@ theorem ae_tendsto_abs_inner_dualEigenvector (hslln : KolmogorovSLLN.{u})
     have e1 := eq_or_eq_neg_eigenvectorBasis hWH hi₁uniq hv1 hv
     have e2 := eq_or_eq_neg_eigenvectorBasis hWH hi₁uniq hw1 hWw
     rcases e1 with h1 | h1 <;> rcases e2 with h2 | h2 <;> rw [h1, h2] <;> simp
-  filter_upwards [M.ae_tendsto_dualGram hslln hyp] with ω hω
-  obtain ⟨zeta, hzeta, hspec, hconc⟩ := exists_tendsto_simple_eigenvalue hweyl
+  filter_upwards [M.ae_tendsto_dualGram hyp] with ω hω
+  obtain ⟨zeta, hzeta, hspec, hconc⟩ := exists_tendsto_simple_eigenvalue
     (fun p => M.dualGram_isHermitian p ω) hWH hω hw1 hWw hsimple
   have hxspec : ∀ᶠ p in atTop, ∃ v : EuclideanSpace ℝ (Fin M.n), v ≠ 0 ∧
       M.dualGram p ω *ᵥ v = zeta p • v := by
     filter_upwards [hspec] with p hp
     obtain ⟨v, hv1, hv, -⟩ := hp
     exact ⟨v, fun h => by simp [h] at hv1, hv⟩
-  have heq := eventually_eq_eigenvalues₀ hweyl (fun p => M.dualGram_isHermitian p ω) hWH hω
+  have heq := eventually_eq_eigenvalues₀ (fun p => M.dualGram_isHermitian p ω) hWH hω
     huniq hzeta hxspec
   intro u hu
   refine hconc u ?_

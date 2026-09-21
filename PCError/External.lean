@@ -12,24 +12,21 @@ public import PCError.Attr
 public import PCError.Defs.TheFactorModelAndItsDerivedMatrices
 
 /-!
-# The principal directions, and classical results assumed as black boxes
+# The principal directions, and two classical results the source cites
 
-Besides `PCError.FactorModelSeq.principalDirection`, this module collects the
-two statements the development assumes.  It proves neither, neither is available
-in Mathlib at the pinned revision, and the source cites rather than proves both.
+Besides `PCError.FactorModelSeq.principalDirection`, this module states the two
+classical results the source cites rather than proves, and which Mathlib does not
+have at the pinned revision.
 
-Eigenvector continuity at a simple eigenvalue used to sit here as a third
-assumption.  It does not belong: the source proves it (Lemma 2), and the
-development now does too, in
+Both are proved here, so neither is an assumption: `PCError.KolmogorovSLLN` by
+`PCError.kolmogorovSLLN` in `PCError.SLLN.Basic`, and `PCError.WeylPerturbation`
+by `PCError.weylPerturbation` in `PCError.Weyl.Basic`.  Nothing takes either as a
+hypothesis; each is packaged as a `Prop`-valued *definition*, which is the form
+its theorem is stated in and the form a consumer applies.
+
+Eigenvector continuity at a simple eigenvalue, which the source proves as its
+Lemma 2, is proved here too, in
 `PCError.tendsto_abs_inner_of_tendsto_eigenvalue`.
-
-Each is packaged as a `Prop`-valued *definition*, not as an `axiom`.  A theorem
-that needs one takes it as an explicit hypothesis, so the assumption is part of
-the statement a reader sees rather than something only `#print axioms` reveals,
-and every theorem of the development is unconditionally true.
-
-A theorem receives only those of the two it actually uses, so its signature
-records exactly which classical inputs it rests on.
 
 ## Main definitions
 
@@ -104,9 +101,8 @@ measurability of `X i` and the integrability making `μ[X i]` meaningful.  The
 source indexes the summands from `1`; here they are indexed from `0`, so its
 `∑ᵢ Var(Xᵢ)/i²` is the sum below over `((i : ℝ) + 1) ^ 2`.
 
-This development does not prove this statement; a theorem that uses it takes it
-as an explicit hypothesis. -/
-@[pcerror "lem_slln"]
+Proved in this development, as `PCError.kolmogorovSLLN` in
+`PCError.SLLN.Basic`, which is where the `lem_slln` tag sits. -/
 def KolmogorovSLLN : Prop :=
   ∀ {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω} [IsProbabilityMeasure μ]
     (X : ℕ → Ω → ℝ), (∀ i, MemLp (X i) 2 μ) → iIndepFun X μ →
@@ -134,9 +130,9 @@ inequalities, Theorem 4.3.1).
 The norm is the one described in the module docstring; symmetry of *both*
 matrices is essential, the bound failing badly for non-normal perturbations.
 
-This development does not prove this statement; a theorem that uses it takes it
-as an explicit hypothesis. -/
-@[pcerror "lem_weyl"]
+Proved in this development, as `PCError.abs_eigenvalues₀_sub_le` in
+`PCError.Weyl.Basic`, which is where the `lem_weyl` tag sits;
+`PCError.weylPerturbation` there is the same result in this packaged form. -/
 def WeylPerturbation : Prop :=
   ∀ {n : Type*} [Fintype n] [DecidableEq n] {A A' : Matrix n n ℝ}
     (hA : A.IsHermitian) (hA' : A'.IsHermitian) (i : Fin (Fintype.card n)),

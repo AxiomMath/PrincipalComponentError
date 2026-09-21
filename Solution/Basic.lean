@@ -31,7 +31,6 @@ in-subspace part of `h_j` is eventually nonzero; and its angle to `b⁽ᵖ⁾ⱼ
 `sin²∠(νⱼ, eⱼ)` (19). -/
 theorem thm_error_decomp {Ω : Type u} (M : FactorModelSeq Ω) [MeasurableSpace Ω]
     {μ : Measure Ω} {G : Matrix (Fin M.k) (Fin M.k) ℝ} {lam : Fin M.k → ℝ}
-    (hslln : KolmogorovSLLN.{u}) (hweyl : WeylPerturbation.{0})
     (hyp : StandingHypotheses μ M G lam) (j : Fin M.k)
     {w : EuclideanSpace ℝ (Fin M.n)} (hw1 : ‖w‖ = 1)
     (hw : M.dualGramLim₀ G *ᵥ w = lam j • w) {ν : EuclideanSpace ℝ (Fin M.k)}
@@ -53,11 +52,11 @@ theorem thm_error_decomp {Ω : Type u} (M : FactorModelSeq Ω) [MeasurableSpace 
         Tendsto (fun p => sinSqAngle ((M.principalSubspace p).starProjection (s.sample p))
           (M.principalDirection p j)) atTop
           (𝓝 (sinSqAngle ν (EuclideanSpace.single j (1 : ℝ))))) :=
-  ⟨M.ae_tendsto_sinSqAngle_principalDirection hslln hweyl hyp j hw1 hw hν,
-   M.ae_tendsto_sinSqAngleSubspace hslln hweyl hyp j hw1 hw hν,
-   M.ae_tendsto_one_sub_sinSqAngleSubspace hslln hweyl hyp j hw1 hw hν,
-   M.ae_eventually_starProjection_ne_zero hslln hweyl hyp j hw1 hw hν,
-   M.ae_tendsto_sinSqAngle_starProjection hslln hweyl hyp j hw1 hw hν⟩
+  ⟨M.ae_tendsto_sinSqAngle_principalDirection hyp j hw1 hw hν,
+   M.ae_tendsto_sinSqAngleSubspace hyp j hw1 hw hν,
+   M.ae_tendsto_one_sub_sinSqAngleSubspace hyp j hw1 hw hν,
+   M.ae_eventually_starProjection_ne_zero hyp j hw1 hw hν,
+   M.ae_tendsto_sinSqAngle_starProjection hyp j hw1 hw hν⟩
 
 /-- **`thm_oos_estimable` — Theorem 2, the observable estimate (38).** Almost surely the
 observable ratio `ℓ⁽ᵖ⁾/θ⁽ᵖ⁾ⱼ` of the average bulk eigenvalue to the `j`-th eigenvalue of the
@@ -65,19 +64,17 @@ dual Gram matrix converges to `δ²/(nλⱼ+δ²)`, which by `thm_error_decomp` 
 out-of-subspace error.  It needs neither eigenvector continuity nor a choice of `νⱼ`. -/
 theorem thm_oos_estimable {Ω : Type u} (M : FactorModelSeq Ω) [MeasurableSpace Ω]
     {μ : Measure Ω} {G : Matrix (Fin M.k) (Fin M.k) ℝ} {lam : Fin M.k → ℝ}
-    (hslln : KolmogorovSLLN.{u}) (hweyl : WeylPerturbation.{0})
     (hyp : StandingHypotheses μ M G lam) (j : Fin M.k) :
     ∀ᵐ ω ∂μ, Tendsto (fun p : ℕ => M.avgBulkEigenvalue p ω /
         M.dualEigenvalues p ω (Fin.castLE M.k_lt_n.le j)) atTop
       (𝓝 (M.δsq / ((M.n : ℝ) * lam j + M.δsq))) :=
-  M.ae_tendsto_avgBulkEigenvalue_div_dualEigenvalues hslln hweyl hyp j
+  M.ae_tendsto_avgBulkEigenvalue_div_dualEigenvalues hyp j
 
 /-- **`thm_error_floor` — Theorem 2, the floor (39).** Almost surely the observable limit is at
 most the limit of the total error, with equality exactly when the in-subspace rotation
 `sin²∠(νⱼ, eⱼ)` vanishes. -/
 theorem thm_error_floor {Ω : Type u} (M : FactorModelSeq Ω) [MeasurableSpace Ω]
     {μ : Measure Ω} {G : Matrix (Fin M.k) (Fin M.k) ℝ} {lam : Fin M.k → ℝ}
-    (hslln : KolmogorovSLLN.{u}) (hweyl : WeylPerturbation.{0})
     (hyp : StandingHypotheses μ M G lam) (j : Fin M.k)
     {w : EuclideanSpace ℝ (Fin M.n)} (hw1 : ‖w‖ = 1)
     (hw : M.dualGramLim₀ G *ᵥ w = lam j • w) {ν : EuclideanSpace ℝ (Fin M.k)}
@@ -91,10 +88,8 @@ theorem thm_error_floor {Ω : Type u} (M : FactorModelSeq Ω) [MeasurableSpace �
             M.dualEigenvalues p ω (Fin.castLE M.k_lt_n.le j))
           = limUnder atTop (fun p => sinSqAngle (s.sample p) (M.principalDirection p j))
           ↔ sinSqAngle ν (EuclideanSpace.single j (1 : ℝ)) = 0)) :=
-  ⟨M.ae_limUnder_avgBulkEigenvalue_div_le_limUnder_sinSqAngle
-      hslln hweyl hyp j hw1 hw hν,
-   M.ae_limUnder_avgBulkEigenvalue_div_eq_limUnder_sinSqAngle_iff
-      hslln hweyl hyp j hw1 hw hν⟩
+  ⟨M.ae_limUnder_avgBulkEigenvalue_div_le_limUnder_sinSqAngle hyp j hw1 hw hν,
+   M.ae_limUnder_avgBulkEigenvalue_div_eq_limUnder_sinSqAngle_iff hyp j hw1 hw hν⟩
 
 /-- **`thm_data_invariant` — Theorem 3(i), the data carry no factor covariance.** The data
 matrix is `Y⁽ᵖ⁾ = B⁽ᵖ⁾F + Z⁽ᵖ⁾`, the systematic eigenvalue listing of `W₀` is unique, and the

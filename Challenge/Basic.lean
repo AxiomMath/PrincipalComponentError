@@ -269,47 +269,6 @@ end PCError
 
 namespace PCError
 
-/-! ## Three classical inputs assumed as hypotheses
-
-Kolmogorov's strong law for independent, not identically distributed summands: V. V. Petrov,
-*Sums of Independent Random Variables*, Springer, 1975, cited by the paper.
-
-Weyl's eigenvalue perturbation inequality: R. Bhatia, *Matrix Analysis*, Springer, 1997,
-III.2, cited by the paper.
-
-Continuity of the eigenvector at a simple eigenvalue: the paper **proves** this itself, as
-its Lemma 2 (stated p. 23, proved pp. 23–24); it is assumed here rather than proved.
-T. Kato, *Perturbation Theory for Linear Operators*, 2nd ed., Springer, 1976, Ch. II, §5.1
-is a reference for the general fact. -/
-
-section External
-
-attribute [local instance] Matrix.instL2OpNormedAddCommGroup
-
-/-- **Kolmogorov's strong law of large numbers** for independent, not necessarily identically
-distributed summands: if the real random variables `X i` are independent with finite variances
-satisfying `∑ᵢ Var(Xᵢ)/i² < ∞`, then `p⁻¹ ∑_{i < p} (Xᵢ - 𝔼[Xᵢ]) → 0` almost surely. -/
-def KolmogorovSLLN : Prop :=
-  ∀ {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω} [IsProbabilityMeasure μ]
-    (X : ℕ → Ω → ℝ), (∀ i, MemLp (X i) 2 μ) → iIndepFun X μ →
-    (Summable fun i : ℕ => Var[X i; μ] / ((i : ℝ) + 1) ^ 2) →
-    ∀ᵐ ω ∂μ, Tendsto
-      (fun p : ℕ => (p : ℝ)⁻¹ * ∑ i ∈ Finset.range p, (X i ω - μ[X i])) atTop (𝓝 0)
-
-/-- **Weyl's eigenvalue perturbation inequality**: for real symmetric matrices `A` and `A'`
-with eigenvalues listed in weakly decreasing order, the `i`-th eigenvalues differ by at most
-the ℓ²-operator norm of `A' - A`. -/
-def WeylPerturbation : Prop :=
-  ∀ {n : Type*} [Fintype n] [DecidableEq n] {A A' : Matrix n n ℝ}
-    (hA : A.IsHermitian) (hA' : A'.IsHermitian) (i : Fin (Fintype.card n)),
-    |hA'.eigenvalues₀ i - hA.eigenvalues₀ i| ≤ ‖A' - A‖
-
-end External
-
-end PCError
-
-namespace PCError
-
 namespace Challenge
 
 /-- **`thm_error_decomp` — Theorem 1, error decomposition.** Almost surely: the squared sine of
@@ -320,7 +279,6 @@ in-subspace part of `h_j` is eventually nonzero; and its angle to `b⁽ᵖ⁾ⱼ
 `sin²∠(νⱼ, eⱼ)` (19). -/
 theorem thm_error_decomp {Ω : Type u} (M : FactorModelSeq Ω) [MeasurableSpace Ω]
     {μ : Measure Ω} {G : Matrix (Fin M.k) (Fin M.k) ℝ} {lam : Fin M.k → ℝ}
-    (hslln : KolmogorovSLLN.{u}) (hweyl : WeylPerturbation.{0})
     (hyp : StandingHypotheses μ M G lam) (j : Fin M.k)
     {w : EuclideanSpace ℝ (Fin M.n)} (hw1 : ‖w‖ = 1)
     (hw : M.dualGramLim₀ G *ᵥ w = lam j • w) {ν : EuclideanSpace ℝ (Fin M.k)}
@@ -350,7 +308,6 @@ dual Gram matrix converges to `δ²/(nλⱼ+δ²)`, which by `thm_error_decomp` 
 out-of-subspace error.  It needs neither eigenvector continuity nor a choice of `νⱼ`. -/
 theorem thm_oos_estimable {Ω : Type u} (M : FactorModelSeq Ω) [MeasurableSpace Ω]
     {μ : Measure Ω} {G : Matrix (Fin M.k) (Fin M.k) ℝ} {lam : Fin M.k → ℝ}
-    (hslln : KolmogorovSLLN.{u}) (hweyl : WeylPerturbation.{0})
     (hyp : StandingHypotheses μ M G lam) (j : Fin M.k) :
     ∀ᵐ ω ∂μ, Tendsto (fun p : ℕ => M.avgBulkEigenvalue p ω /
         M.dualEigenvalues p ω (Fin.castLE M.k_lt_n.le j)) atTop
@@ -362,7 +319,6 @@ most the limit of the total error, with equality exactly when the in-subspace ro
 `sin²∠(νⱼ, eⱼ)` vanishes. -/
 theorem thm_error_floor {Ω : Type u} (M : FactorModelSeq Ω) [MeasurableSpace Ω]
     {μ : Measure Ω} {G : Matrix (Fin M.k) (Fin M.k) ℝ} {lam : Fin M.k → ℝ}
-    (hslln : KolmogorovSLLN.{u}) (hweyl : WeylPerturbation.{0})
     (hyp : StandingHypotheses μ M G lam) (j : Fin M.k)
     {w : EuclideanSpace ℝ (Fin M.n)} (hw1 : ‖w‖ = 1)
     (hw : M.dualGramLim₀ G *ᵥ w = lam j • w) {ν : EuclideanSpace ℝ (Fin M.k)}

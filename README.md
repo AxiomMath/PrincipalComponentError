@@ -2,12 +2,12 @@
 
 # Principal Component Error in High-Dimensional Factor Models
 
-This is a Lean formalization of the asymptotic error of the sample principal directions in a latent factor model, in the regime where the cross-section grows and the sample size stays fixed.
+This is a Lean formalization of the asymptotic error of the sample principal directions in a latent factor model, in the regime where the cross-section grows and the sample size stays fixed. The results are unconditional: the classical inputs the source cites are proved here rather than assumed.
 
 ## Main Results
 
-* The error decomposition: the squared sine of the angle between the `j`-th sample principal direction and its target converges almost surely to an out-of-subspace error plus an in-subspace rotation error, assuming Kolmogorov's strong law and Weyl's perturbation inequality.
-* The out-of-subspace error is estimable: the observable ratio of the average bulk eigenvalue to the `j`-th dual Gram eigenvalue converges to it almost surely, assuming Kolmogorov's strong law and Weyl's perturbation inequality.
+* The error decomposition: the squared sine of the angle between the `j`-th sample principal direction and its target converges almost surely to an out-of-subspace error plus an in-subspace rotation error.
+* The out-of-subspace error is estimable: the observable ratio of the average bulk eigenvalue to the `j`-th dual Gram eigenvalue converges to it almost surely.
 * The rotation error is not estimable: with at least two factors, every value between the out-of-subspace floor and `1` is the limiting error of some admissible factor covariance.
 
 See [§Formal Challenge](#formal-challenge) for a formal certificate.

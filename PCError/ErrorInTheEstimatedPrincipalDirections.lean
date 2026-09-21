@@ -397,10 +397,9 @@ theorem ae_tendsto_scaledScores_add_transpose_b_mul_noiseMatrix
   simpa using hyp.tendsto_scaledScores.add hω
 
 /-- The reconstructed sample principal directions are eventually unit vectors. -/
-theorem ae_eventually_norm_sample_eq_one (hslln : KolmogorovSLLN.{u})
-    (hweyl : WeylPerturbation.{0}) (hyp : StandingHypotheses μ M G lam) (j : Fin M.k) :
+theorem ae_eventually_norm_sample_eq_one (hyp : StandingHypotheses μ M G lam) (j : Fin M.k) :
     ∀ᵐ ω ∂μ, ∀ s : M.PrincipalDirectionSeq j ω, ∀ᶠ p in atTop, ‖s.sample p‖ = 1 := by
-  filter_upwards [M.ae_tendsto_dualEigenvalues hslln hweyl hyp j] with ω hθ s
+  filter_upwards [M.ae_tendsto_dualEigenvalues hyp j] with ω hθ s
   filter_upwards [hθ.eventually_const_lt (M.lam_add_div_pos hyp.toAsymptoticHypotheses j),
     s.norm_dual, s.dualGram_mulVec_dual, s.sqrt_smul_sample, eventually_gt_atTop 0]
     with p h1 h2 h3 h4 h5
@@ -410,9 +409,8 @@ theorem ae_eventually_norm_sample_eq_one (hslln : KolmogorovSLLN.{u})
 `ς⁽ᵖ⁾(b⁽ᵖ⁾)ᵀh_j → √(nλⱼ/(nλⱼ+δ²)) νⱼ`, where `νⱼ` is the unit eigenvector of `N` at `λⱼ` that
 Gram duality attaches to the eigenvector `wⱼ` of `W₀`. -/
 @[pcerror "prop_coord_limit"]
-theorem ae_exists_sign_tendsto_transpose_b_mulVec (hslln : KolmogorovSLLN.{u})
-    (hweyl : WeylPerturbation.{0}) (hyp : StandingHypotheses μ M G lam) (j : Fin M.k)
-    {w : EuclideanSpace ℝ (Fin M.n)} (hw1 : ‖w‖ = 1)
+theorem ae_exists_sign_tendsto_transpose_b_mulVec (hyp : StandingHypotheses μ M G lam)
+    (j : Fin M.k) {w : EuclideanSpace ℝ (Fin M.n)} (hw1 : ‖w‖ = 1)
     (hw : M.dualGramLim₀ G *ᵥ w = lam j • w) {ν : EuclideanSpace ℝ (Fin M.k)}
     (hν : M.scaledScoresLim *ᵥ w = Real.sqrt ((M.n : ℝ) * lam j) • ν) :
     ∀ᵐ ω ∂μ, ∀ s : M.PrincipalDirectionSeq j ω, ∃ ς : ℕ → ℝ, (∀ p, ς p = 1 ∨ ς p = -1) ∧
@@ -425,9 +423,9 @@ theorem ae_exists_sign_tendsto_transpose_b_mulVec (hslln : KolmogorovSLLN.{u})
   have hfin : (Real.sqrt ((M.n : ℝ) * lam j + M.δsq))⁻¹ • (Real.sqrt ((M.n : ℝ) * lam j) • ν)
       = Real.sqrt ((M.n : ℝ) * lam j / ((M.n : ℝ) * lam j + M.δsq)) • ν := by
     rw [smul_smul, Real.sqrt_div (by positivity), div_eq_inv_mul]
-  filter_upwards [M.ae_tendsto_dualEigenvalues hslln hweyl hyp j,
+  filter_upwards [M.ae_tendsto_dualEigenvalues hyp j,
     M.ae_tendsto_scaledScores_add_transpose_b_mul_noiseMatrix hyp,
-    M.ae_tendsto_abs_inner_dualEigenvector hslln hweyl hyp j hw1 hw] with ω hθ hC habs s
+    M.ae_tendsto_abs_inner_dualEigenvector hyp j hw1 hw] with ω hθ hC habs s
   have habs' : Tendsto (fun p => |⟪s.dual p, w⟫|) atTop (𝓝 1) :=
     habs s.dual (s.norm_dual.and s.dualGram_mulVec_dual)
   have hpin : Tendsto (fun p => Real.sign ⟪s.dual p, w⟫ • s.dual p) atTop (𝓝 w) :=
@@ -470,12 +468,11 @@ theorem ae_exists_sign_tendsto_transpose_b_mulVec (hslln : KolmogorovSLLN.{u})
 
 section Limits
 
-variable (hslln : KolmogorovSLLN.{u}) (hweyl : WeylPerturbation.{0})
-  (hyp : StandingHypotheses μ M G lam) (j : Fin M.k) {w : EuclideanSpace ℝ (Fin M.n)}
+variable (hyp : StandingHypotheses μ M G lam) (j : Fin M.k) {w : EuclideanSpace ℝ (Fin M.n)}
   (hw1 : ‖w‖ = 1) (hw : M.dualGramLim₀ G *ᵥ w = lam j • w) {ν : EuclideanSpace ℝ (Fin M.k)}
   (hν : M.scaledScoresLim *ᵥ w = Real.sqrt ((M.n : ℝ) * lam j) • ν)
 
-include hslln hweyl hyp hw1 hw hν
+include hyp hw1 hw hν
 
 /-- **In-subspace mass**: almost surely `cos²∠(h_j, 𝓑) → nλⱼ/(nλⱼ+δ²)`. -/
 @[pcerror "thm_insub_mass"]
@@ -492,8 +489,8 @@ theorem ae_tendsto_one_sub_sinSqAngleSubspace :
       = (M.n : ℝ) * lam j / ((M.n : ℝ) * lam j + M.δsq) := by
     rw [norm_smul, Real.norm_eq_abs, hν1, mul_one, sq_abs,
       Real.sq_sqrt (by positivity : (0 : ℝ) ≤ (M.n : ℝ) * lam j / ((M.n : ℝ) * lam j + M.δsq))]
-  filter_upwards [M.ae_exists_sign_tendsto_transpose_b_mulVec hslln hweyl hyp j hw1 hw hν,
-    M.ae_eventually_norm_sample_eq_one hslln hweyl hyp j] with ω hex hnorm s
+  filter_upwards [M.ae_exists_sign_tendsto_transpose_b_mulVec hyp j hw1 hw hν,
+    M.ae_eventually_norm_sample_eq_one hyp j] with ω hex hnorm s
   obtain ⟨ς, hς, hlimit⟩ := hex s
   have h1 := hlimit.norm.pow 2
   rw [hval] at h1
@@ -516,8 +513,7 @@ theorem ae_tendsto_sinSqAngleSubspace :
       = M.δsq / ((M.n : ℝ) * lam j + M.δsq) := by
     field_simp
     ring
-  filter_upwards [M.ae_tendsto_one_sub_sinSqAngleSubspace hslln hweyl hyp j hw1 hw hν]
-    with ω hcos s
+  filter_upwards [M.ae_tendsto_one_sub_sinSqAngleSubspace hyp j hw1 hw hν] with ω hcos s
   simpa [he] using (tendsto_const_nhds (x := (1 : ℝ)) (f := atTop)).sub (hcos s)
 
 /-- **The projection is eventually nonzero**: almost surely `Π h_j ≠ 0` for all large `p`. -/
@@ -528,8 +524,7 @@ theorem ae_eventually_starProjection_ne_zero :
   have hlam : 0 < lam j := hyp.hasPosEigenvalues_dualGramLim₀.pos j
   have hpos : 0 < (M.n : ℝ) * lam j / ((M.n : ℝ) * lam j + M.δsq) :=
     div_pos (mul_pos (by exact_mod_cast M.n_pos) hlam) (M.n_mul_add_δsq_pos hlam)
-  filter_upwards [M.ae_tendsto_one_sub_sinSqAngleSubspace hslln hweyl hyp j hw1 hw hν]
-    with ω hcos s
+  filter_upwards [M.ae_tendsto_one_sub_sinSqAngleSubspace hyp j hw1 hw hν] with ω hcos s
   filter_upwards [(hcos s).eventually_const_lt hpos] with p hp h0
   simp [sinSqAngleSubspace, h0] at hp
 
@@ -549,8 +544,7 @@ theorem ae_tendsto_sinSqAngle_starProjection :
       hw1 hw hν.symm
   have hν0 : ν ≠ 0 := norm_ne_zero_iff.1 (by simp [hν1])
   have hej : (EuclideanSpace.single j (1 : ℝ)) ≠ 0 := norm_ne_zero_iff.1 (by simp)
-  filter_upwards [M.ae_exists_sign_tendsto_transpose_b_mulVec hslln hweyl hyp j hw1 hw hν]
-    with ω hex s
+  filter_upwards [M.ae_exists_sign_tendsto_transpose_b_mulVec hyp j hw1 hw hν] with ω hex s
   obtain ⟨ς, hς, hlimit⟩ := hex s
   have hcont := tendsto_sinSqAngle (smul_ne_zero hκ.ne' hν0) hej hlimit
   rw [sinSqAngle_smul_left hκ.ne'] at hcont
@@ -574,8 +568,8 @@ theorem ae_tendsto_sinSqAngle_principalDirection :
       = (M.n : ℝ) * lam j / ((M.n : ℝ) * lam j + M.δsq) := by
     field_simp
     ring
-  filter_upwards [M.ae_tendsto_sinSqAngleSubspace hslln hweyl hyp j hw1 hw hν,
-    M.ae_tendsto_sinSqAngle_starProjection hslln hweyl hyp j hw1 hw hν] with ω hoos hrot s
+  filter_upwards [M.ae_tendsto_sinSqAngleSubspace hyp j hw1 hw hν,
+    M.ae_tendsto_sinSqAngle_starProjection hyp j hw1 hw hν] with ω hoos hrot s
   have hsum := (hoos s).add
     (((tendsto_const_nhds (x := (1 : ℝ)) (f := atTop)).sub (hoos s)).mul (hrot s))
   rw [he] at hsum

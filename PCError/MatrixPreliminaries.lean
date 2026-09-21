@@ -9,6 +9,7 @@ public import Mathlib.Algebra.Order.Star.Real
 public import Mathlib.Basic.Real.Sign
 public import PCError.Attr
 public import PCError.External
+public import PCError.Weyl.Basic
 
 /-!
 # Matrix preliminaries
@@ -37,8 +38,7 @@ asymptotic analysis.
 
 Vectors are taken in `EuclideanSpace ℝ m`, so that `‖·‖` and `⟪·, ·⟫` are the Euclidean norm
 and inner product while `Matrix.mulVec` still applies, exactly as in
-`Matrix.IsHermitian.mulVec_eigenvectorBasis` and in the cited inputs
-`PCError.WeylPerturbation`.  The
+`Matrix.IsHermitian.mulVec_eigenvectorBasis` and in `PCError.WeylPerturbation`.  The
 elaborator inserts the coercion `WithLp.ofLp` in `A *ᵥ v`, so an equation such as
 `A *ᵥ v = lam • v` is an equation of plain vectors; only norms and inner products see the
 `EuclideanSpace` structure.  `PCError.inner_eq_dotProduct` is the bridge used to compute them.
@@ -453,12 +453,11 @@ unit eigenvectors being exactly `±v` — then for all large `p` the matrix `A p
 eigenvalue `zeta p`, these converge to `ζ`, and *every* choice of unit eigenvectors of `A p` at
 `zeta p` has `|⟪·, v⟫| → 1`.
 
-The eigenvalue `zeta p` is the one Weyl's inequality (`hweyl`) keeps close to `ζ`, and the
+The eigenvalue `zeta p` is the one Weyl's inequality keeps close to `ζ`, and the
 eigenvector statement is `PCError.tendsto_abs_inner_of_tendsto_eigenvalue` applied to that
 eigenvalue, which needs no hypothesis beyond the ones already present. -/
 @[pcerror "lem_eigpair_conv"]
-theorem exists_tendsto_simple_eigenvalue (hweyl : WeylPerturbation.{u})
-    (hA : ∀ p, (A p).IsHermitian) (hA₀ : A₀.IsHermitian)
+theorem exists_tendsto_simple_eigenvalue (hA : ∀ p, (A p).IsHermitian) (hA₀ : A₀.IsHermitian)
     (hconv : Tendsto A atTop (𝓝 A₀)) {ζ : ℝ} {v : EuclideanSpace ℝ m} (hv : ‖v‖ = 1)
     (hAv : A₀ *ᵥ v = ζ • v)
     (hsimple : ∀ w : EuclideanSpace ℝ m, ‖w‖ = 1 → A₀ *ᵥ w = ζ • w → w = v ∨ w = -v) :
@@ -478,7 +477,7 @@ theorem exists_tendsto_simple_eigenvalue (hweyl : WeylPerturbation.{u})
   obtain ⟨zeta, hzetadef⟩ : ∃ zeta : ℕ → ℝ, ∀ p, zeta p = (hA p).eigenvalues₀ j₀ :=
     ⟨_, fun _ => rfl⟩
   have hweyl' : ∀ p j, |(hA p).eigenvalues₀ j - hA₀.eigenvalues₀ j| ≤ ‖A p - A₀‖ :=
-    fun p => hweyl hA₀ (hA p)
+    fun p => weylPerturbation.{u} hA₀ (hA p)
   have hnorm : Tendsto (fun p => ‖A p - A₀‖) atTop (𝓝 0) := tendsto_l2_opNorm_sub_zero hconv
   have hnear : ∀ p, |zeta p - ζ| ≤ ‖A p - A₀‖ := fun p => by
     rw [hzetadef p, ← hj₀]; exact hweyl' p j₀
