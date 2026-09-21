@@ -304,19 +304,6 @@ def WeylPerturbation : Prop :=
     (hA : A.IsHermitian) (hA' : A'.IsHermitian) (i : Fin (Fintype.card n)),
     |hA'.eigenvalues₀ i - hA.eigenvalues₀ i| ≤ ‖A' - A‖
 
-/-- **Continuity of the eigenvector at a simple eigenvalue**, in sequential form: if real
-symmetric `A p → A₀` and `μ` is an eigenvalue of `A₀` whose unit eigenvectors are exactly
-`±v`, then there are eigenpairs `(lam p, u p)` of `A p` for all large `p`, with `‖u p‖ = 1`
-and `0 ≤ ⟪u p, v⟫`, such that `lam p → μ` and `u p → v`. -/
-def EigenpairContinuity : Prop :=
-  ∀ {n : Type*} [Fintype n] {A : ℕ → Matrix n n ℝ} {A₀ : Matrix n n ℝ},
-    (∀ p, (A p).IsHermitian) → A₀.IsHermitian → Tendsto A atTop (𝓝 A₀) →
-    ∀ {μ : ℝ} {v : EuclideanSpace ℝ n}, ‖v‖ = 1 → A₀ *ᵥ v = μ • v →
-    (∀ w : EuclideanSpace ℝ n, ‖w‖ = 1 → A₀ *ᵥ w = μ • w → w = v ∨ w = -v) →
-    ∃ lam : ℕ → ℝ, ∃ u : ℕ → EuclideanSpace ℝ n,
-      Tendsto lam atTop (𝓝 μ) ∧ Tendsto u atTop (𝓝 v) ∧
-        ∀ᶠ p in atTop, A p *ᵥ u p = lam p • u p ∧ ‖u p‖ = 1 ∧ 0 ≤ ⟪u p, v⟫
-
 end External
 
 end PCError
@@ -334,7 +321,7 @@ in-subspace part of `h_j` is eventually nonzero; and its angle to `b⁽ᵖ⁾ⱼ
 theorem thm_error_decomp {Ω : Type u} (M : FactorModelSeq Ω) [MeasurableSpace Ω]
     {μ : Measure Ω} {G : Matrix (Fin M.k) (Fin M.k) ℝ} {lam : Fin M.k → ℝ}
     (hslln : KolmogorovSLLN.{u}) (hweyl : WeylPerturbation.{0})
-    (heigcont : EigenpairContinuity.{0}) (hyp : StandingHypotheses μ M G lam) (j : Fin M.k)
+    (hyp : StandingHypotheses μ M G lam) (j : Fin M.k)
     {w : EuclideanSpace ℝ (Fin M.n)} (hw1 : ‖w‖ = 1)
     (hw : M.dualGramLim₀ G *ᵥ w = lam j • w) {ν : EuclideanSpace ℝ (Fin M.k)}
     (hν : M.scaledScoresLim *ᵥ w = Real.sqrt ((M.n : ℝ) * lam j) • ν) :
@@ -376,7 +363,7 @@ most the limit of the total error, with equality exactly when the in-subspace ro
 theorem thm_error_floor {Ω : Type u} (M : FactorModelSeq Ω) [MeasurableSpace Ω]
     {μ : Measure Ω} {G : Matrix (Fin M.k) (Fin M.k) ℝ} {lam : Fin M.k → ℝ}
     (hslln : KolmogorovSLLN.{u}) (hweyl : WeylPerturbation.{0})
-    (heigcont : EigenpairContinuity.{0}) (hyp : StandingHypotheses μ M G lam) (j : Fin M.k)
+    (hyp : StandingHypotheses μ M G lam) (j : Fin M.k)
     {w : EuclideanSpace ℝ (Fin M.n)} (hw1 : ‖w‖ = 1)
     (hw : M.dualGramLim₀ G *ᵥ w = lam j • w) {ν : EuclideanSpace ℝ (Fin M.k)}
     (hν : M.scaledScoresLim *ᵥ w = Real.sqrt ((M.n : ℝ) * lam j) • ν) :

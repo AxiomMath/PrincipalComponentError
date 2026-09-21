@@ -15,17 +15,20 @@ public import PCError.Defs.TheFactorModelAndItsDerivedMatrices
 # The principal directions, and classical results assumed as black boxes
 
 Besides `PCError.FactorModelSeq.principalDirection`, this module collects the
-three statements the development assumes.  It proves none of those three, and
-none of the three is available in Mathlib at the pinned revision.  Two of them are
-standard classical theorems that the source cites; the third the source proves
-itself, and only this formalization leaves it unproved.
+two statements the development assumes.  It proves neither, neither is available
+in Mathlib at the pinned revision, and the source cites rather than proves both.
+
+Eigenvector continuity at a simple eigenvalue used to sit here as a third
+assumption.  It does not belong: the source proves it (Lemma 2), and the
+development now does too, in
+`PCError.tendsto_abs_inner_of_tendsto_eigenvalue`.
 
 Each is packaged as a `Prop`-valued *definition*, not as an `axiom`.  A theorem
 that needs one takes it as an explicit hypothesis, so the assumption is part of
 the statement a reader sees rather than something only `#print axioms` reveals,
 and every theorem of the development is unconditionally true.
 
-A theorem receives only those of the three it actually uses, so its signature
+A theorem receives only those of the two it actually uses, so its signature
 records exactly which classical inputs it rests on.
 
 ## Main definitions
@@ -38,8 +41,6 @@ records exactly which classical inputs it rests on.
 * `PCError.WeylPerturbation`: Weyl's eigenvalue perturbation inequality — the
   `i`-th largest eigenvalue of a real symmetric matrix is `1`-Lipschitz in the
   ℓ²-operator norm.
-* `PCError.EigenpairContinuity`: continuity of the eigenvector at a simple
-  eigenvalue, in the sequential form the source uses.
 
 ## Implementation notes
 
@@ -140,47 +141,6 @@ def WeylPerturbation : Prop :=
   ∀ {n : Type*} [Fintype n] [DecidableEq n] {A A' : Matrix n n ℝ}
     (hA : A.IsHermitian) (hA' : A'.IsHermitian) (i : Fin (Fintype.card n)),
     |hA'.eigenvalues₀ i - hA.eigenvalues₀ i| ≤ ‖A' - A‖
-
-/-! ### Eigenvector continuity at a simple eigenvalue -/
-
-/-- **Continuity of the eigenvector at a simple eigenvalue**, in the sequential
-form the source uses: if real symmetric matrices `A p` converge to a real
-symmetric `A₀`, and `μ` is an eigenvalue of `A₀` whose unit eigenvectors are
-exactly `±v`, then one can choose real numbers `lam p` and unit vectors `u p`
-that are eigenpairs of `A p` for all large `p`, sign-normalised by
-`0 ≤ ⟪u p, v⟫`, with `lam p → μ` and `u p → v`.
-
-The source **proves** this rather than citing it: it is Lemma 2, stated on p. 23
-and proved on pp. 23–24, from Weyl's inequality together with compactness of the
-unit sphere and simplicity of the eigenvalue.  This development nevertheless
-assumes it instead of proving it, which is why it is collected here beside the
-two results the source really does cite.  The Kato reference below is for the
-general fact, not for the source's treatment of it.
-
-The simplicity hypothesis is what makes the statement true: eigenvectors of a
-convergent family of symmetric matrices need not converge at a repeated
-eigenvalue, only the eigenprojections do.
-
-Reference: T. Kato, *Perturbation Theory for Linear Operators*, 2nd ed.,
-Springer, 1976, Ch. II, §5.1 (continuity of the eigenvalues and eigenprojections
-of a symmetric matrix under a convergent perturbation; §5.3 records the failure
-without simplicity); see also G. W. Stewart and J.-G. Sun, *Matrix Perturbation
-Theory*, Academic Press, 1990, §V.2.
-
-Vectors are taken in `EuclideanSpace ℝ n` so that `‖·‖` and `⟪·, ·⟫` are the
-Euclidean norm and inner product, while `Matrix.mulVec` still applies, exactly as
-in `Matrix.IsHermitian.mulVec_eigenvectorBasis`.  Convergence of the matrices is
-in the entrywise topology, which for a fixed finite index type is the topology of
-every norm. -/
-@[pcerror "lem_eigcont"]
-def EigenpairContinuity : Prop :=
-  ∀ {n : Type*} [Fintype n] {A : ℕ → Matrix n n ℝ} {A₀ : Matrix n n ℝ},
-    (∀ p, (A p).IsHermitian) → A₀.IsHermitian → Tendsto A atTop (𝓝 A₀) →
-    ∀ {μ : ℝ} {v : EuclideanSpace ℝ n}, ‖v‖ = 1 → A₀ *ᵥ v = μ • v →
-    (∀ w : EuclideanSpace ℝ n, ‖w‖ = 1 → A₀ *ᵥ w = μ • w → w = v ∨ w = -v) →
-    ∃ lam : ℕ → ℝ, ∃ u : ℕ → EuclideanSpace ℝ n,
-      Tendsto lam atTop (𝓝 μ) ∧ Tendsto u atTop (𝓝 v) ∧
-        ∀ᶠ p in atTop, A p *ᵥ u p = lam p • u p ∧ ‖u p‖ = 1 ∧ 0 ≤ ⟪u p, v⟫
 
 end PCError
 

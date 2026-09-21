@@ -13,7 +13,7 @@ public import PCError.External
 /-!
 # Matrix preliminaries
 
-Four elementary facts about real matrices and their eigenpairs, used throughout the
+Elementary facts about real matrices and their eigenpairs, used throughout the
 asymptotic analysis.
 
 ## Main statements
@@ -25,6 +25,9 @@ asymptotic analysis.
   is a unit eigenvector of `AᵀA` at `λ`.
 * `PCError.mem_spectrum_mul_transpose_iff`: the two Gram products `AAᵀ` and `AᵀA` share their
   nonzero spectrum.
+* `PCError.mulVec_eq_smul_of_tendsto`: an eigenpair relation passes to the limit.
+* `PCError.tendsto_abs_inner_of_tendsto_eigenvalue`: unit eigenvectors at a converging simple
+  eigenvalue align with the limiting eigenvector, `|⟪w p, v⟫| → 1`.
 * `PCError.exists_tendsto_simple_eigenvalue`: eigenpair convergence at a simple eigenvalue.
 * `PCError.eventually_inner_ne_zero`, `PCError.tendsto_real_sign_inner_smul`: *sign pinning* — unit
   vectors whose inner products with a fixed unit vector tend to `1` in absolute value converge
@@ -35,14 +38,14 @@ asymptotic analysis.
 Vectors are taken in `EuclideanSpace ℝ m`, so that `‖·‖` and `⟪·, ·⟫` are the Euclidean norm
 and inner product while `Matrix.mulVec` still applies, exactly as in
 `Matrix.IsHermitian.mulVec_eigenvectorBasis` and in the cited inputs
-`PCError.WeylPerturbation` and `PCError.EigenpairContinuity`.  The
+`PCError.WeylPerturbation`.  The
 elaborator inserts the coercion `WithLp.ofLp` in `A *ᵥ v`, so an equation such as
 `A *ᵥ v = lam • v` is an equation of plain vectors; only norms and inner products see the
 `EuclideanSpace` structure.  `PCError.inner_eq_dotProduct` is the bridge used to compute them.
 
-Simplicity of an eigenvalue is spelled out as in `PCError.EigenpairContinuity`: the unit
-eigenvectors at that eigenvalue are exactly `±v`.  This is what a one-dimensional eigenspace
-amounts to, and it is the form the eigenvector arguments consume.
+Simplicity of an eigenvalue is spelled out throughout as: the unit eigenvectors at that
+eigenvalue are exactly `±v`.  This is what a one-dimensional eigenspace amounts to, and it is the
+form the eigenvector arguments consume.
 -/
 
 @[expose] public section
@@ -374,6 +377,76 @@ universe u
 
 variable {m : Type u} [Fintype m] {A : ℕ → Matrix m m ℝ} {A₀ : Matrix m m ℝ}
 
+/-- **Limit of an eigenpair relation**: when the matrices `B p` converge to `B₀`, the vectors
+`w p` to `w₀`, and the scalars `zeta p` to `ζ`, an eigenpair relation that holds for all large `p`
+passes to the limit.
+
+Neither symmetry nor a sequential index is needed. Each entry of `B *ᵥ x` is a polynomial in the
+entries of `B` and `x`, and likewise for `t • x`, so both sides converge; they agree eventually,
+so their limits agree. -/
+@[pcerror "lem_eigen_limit"]
+theorem mulVec_eq_smul_of_tendsto {ι : Type*} {l : Filter ι} [l.NeBot]
+    {B : ι → Matrix m m ℝ} {B₀ : Matrix m m ℝ} (hB : Tendsto B l (𝓝 B₀))
+    {w : ι → EuclideanSpace ℝ m} {w₀ : EuclideanSpace ℝ m} (hw : Tendsto w l (𝓝 w₀))
+    {zeta : ι → ℝ} {ζ : ℝ} (hzeta : Tendsto zeta l (𝓝 ζ))
+    (heig : ∀ᶠ p in l, B p *ᵥ w p = zeta p • w p) :
+    B₀ *ᵥ w₀ = ζ • w₀ := by
+  have hofLp : Tendsto (fun p => (w p).ofLp) l (𝓝 w₀.ofLp) :=
+    ((PiLp.homeomorph 2 fun _ : m => ℝ).continuous.tendsto w₀).comp hw
+  have h1 : Tendsto (fun p => B p *ᵥ (w p).ofLp) l (𝓝 (B₀ *ᵥ w₀.ofLp)) :=
+    ((continuous_fst.matrix_mulVec continuous_snd).tendsto
+      (B₀, w₀.ofLp)).comp (hB.prodMk_nhds hofLp)
+  have h2 : Tendsto (fun p => zeta p • (w p).ofLp) l (𝓝 (ζ • w₀.ofLp)) := hzeta.smul hofLp
+  exact tendsto_nhds_unique (h1.congr' (heig.mono fun p hp => by rw [hp])) h2
+
+/-- **Unit eigenvectors at a converging simple eigenvalue align with the limiting eigenvector**:
+if `A p → A₀`, the eigenvalue `ζ` of `A₀` is simple with unit eigenvector `v`, and the `w p` are
+unit eigenvectors of `A p` at eigenvalues `zeta p → ζ`, then `|⟪w p, v⟫| → 1`.
+
+The eigenvectors themselves need not converge, since `w p` and `-w p` are equally good choices;
+that is why the conclusion is about the absolute inner product, and why
+`PCError.tendsto_real_sign_inner_smul` is what turns it into convergence of the sign-pinned
+representatives.
+
+The numbers `|⟪w p, v⟫|` lie in the compact interval `[0,1]`, so it suffices that `1` is their
+only cluster point. At a cluster point `t`, a subsequence of the `w p` converges on the compact
+unit sphere to some unit `wbar`, which `PCError.mulVec_eq_smul_of_tendsto` makes an eigenvector of
+`A₀` at `ζ`; simplicity forces `wbar = ±v`, so `|⟪wbar, v⟫| = 1`, and that subsequence tends both
+to `t` and to `1`.
+
+Symmetry of the matrices is never used. -/
+@[pcerror "lem_eigvec_cluster"]
+theorem tendsto_abs_inner_of_tendsto_eigenvalue (hconv : Tendsto A atTop (𝓝 A₀))
+    {ζ : ℝ} {v : EuclideanSpace ℝ m} (hv : ‖v‖ = 1)
+    (hsimple : ∀ w : EuclideanSpace ℝ m, ‖w‖ = 1 → A₀ *ᵥ w = ζ • w → w = v ∨ w = -v)
+    {zeta : ℕ → ℝ} (hzeta : Tendsto zeta atTop (𝓝 ζ)) {w : ℕ → EuclideanSpace ℝ m}
+    (hw : ∀ᶠ p in atTop, ‖w p‖ = 1 ∧ A p *ᵥ w p = zeta p • w p) :
+    Tendsto (fun p => |⟪w p, v⟫|) atTop (𝓝 1) := by
+  refine (isCompact_Icc (a := (0 : ℝ)) (b := 1)).tendsto_nhds_of_unique_mapClusterPt ?_ ?_
+  · filter_upwards [hw] with p hp
+    refine ⟨abs_nonneg _, ?_⟩
+    calc |⟪w p, v⟫| ≤ ‖w p‖ * ‖v‖ := abs_real_inner_le_norm _ _
+      _ = 1 := by rw [hp.1, hv]; norm_num
+  · intro t _ht hcl
+    obtain ⟨φ, hφmono, hφ⟩ := hcl.tendsto_subseq
+    have hφtop : Tendsto φ atTop atTop := hφmono.tendsto_atTop
+    have hsph : ∃ᶠ j in atTop, w (φ j) ∈ Metric.sphere (0 : EuclideanSpace ℝ m) 1 :=
+      ((hφtop.eventually hw).mono fun j hj => by
+        simpa [Metric.mem_sphere, dist_zero_right] using hj.1).frequently
+    obtain ⟨wbar, hwbarmem, ψ, hψmono, hψ⟩ :=
+      (isCompact_sphere (0 : EuclideanSpace ℝ m) 1).tendsto_subseq' hsph
+    have hχtop : Tendsto (fun j => φ (ψ j)) atTop atTop := hφtop.comp hψmono.tendsto_atTop
+    have hwbar1 : ‖wbar‖ = 1 := by
+      simpa [Metric.mem_sphere, dist_zero_right] using hwbarmem
+    have hAwbar : A₀ *ᵥ wbar = ζ • wbar :=
+      mulVec_eq_smul_of_tendsto (hconv.comp hχtop) hψ (hzeta.comp hχtop)
+        ((hχtop.eventually hw).mono fun j hj => hj.2)
+    have habs : |⟪wbar, v⟫| = 1 := by
+      rcases hsimple wbar hwbar1 hAwbar with h | h <;> simp [h, hv, inner_neg_left]
+    refine tendsto_nhds_unique ((hφ.comp hψmono.tendsto_atTop).congr fun _ => rfl) ?_
+    rw [← habs]
+    exact (hψ.inner (tendsto_const_nhds (x := v) (f := atTop))).abs
+
 /-- **Eigenpair convergence at a simple eigenvalue**: if real symmetric matrices `A p` converge
 to a real symmetric `A₀`, and `ζ` is a simple eigenvalue of `A₀` with unit eigenvector `v` — its
 unit eigenvectors being exactly `±v` — then for all large `p` the matrix `A p` has a simple
@@ -381,11 +454,11 @@ eigenvalue `zeta p`, these converge to `ζ`, and *every* choice of unit eigenvec
 `zeta p` has `|⟪·, v⟫| → 1`.
 
 The eigenvalue `zeta p` is the one Weyl's inequality (`hweyl`) keeps close to `ζ`, and the
-eigenvector statement comes from eigenpair continuity (`heigcont`) together with simplicity,
-which pins any other choice of unit eigenvector up to sign. -/
+eigenvector statement is `PCError.tendsto_abs_inner_of_tendsto_eigenvalue` applied to that
+eigenvalue, which needs no hypothesis beyond the ones already present. -/
 @[pcerror "lem_eigpair_conv"]
 theorem exists_tendsto_simple_eigenvalue (hweyl : WeylPerturbation.{u})
-    (heigcont : EigenpairContinuity.{u}) (hA : ∀ p, (A p).IsHermitian) (hA₀ : A₀.IsHermitian)
+    (hA : ∀ p, (A p).IsHermitian) (hA₀ : A₀.IsHermitian)
     (hconv : Tendsto A atTop (𝓝 A₀)) {ζ : ℝ} {v : EuclideanSpace ℝ m} (hv : ‖v‖ = 1)
     (hAv : A₀ *ᵥ v = ζ • v)
     (hsimple : ∀ w : EuclideanSpace ℝ m, ‖w‖ = 1 → A₀ *ᵥ w = ζ • w → w = v ∨ w = -v) :
@@ -428,26 +501,7 @@ theorem exists_tendsto_simple_eigenvalue (hweyl : WeylPerturbation.{u})
   refine ⟨zeta, hzeta, ?_, ?_⟩
   · filter_upwards [hsimplep] with p hp
     exact exists_unit_eigenvector_eq_or_neg (hA p) (hzetadef p).symm hp
-  · -- the eigenvector statement: eigenpair continuity supplies one choice, simplicity pins
-    -- every other choice to it up to sign
-    obtain ⟨lam, u, hlam, hu, huev⟩ := heigcont hA hA₀ hconv hv hAv hsimple
-    have hlamzeta : ∀ᶠ p in atTop, lam p = zeta p := by
-      have hlamnear : ∀ᶠ p in atTop, |lam p - ζ| < γ := by
-        simpa using hlam.eventually (eventually_abs_sub_lt ζ hγpos)
-      filter_upwards [huev, hfar, hlamnear] with p h1 h2 h3
-      rw [hzetadef p]
-      exact eq_eigenvalues₀_of_abs_sub_lt (hA p) h2 h3 (fun h => by simp [h] at h1) h1.1
-    have habsu : Tendsto (fun p => |⟪u p, v⟫|) atTop (𝓝 1) := by
-      have h := (Filter.Tendsto.inner (𝕜 := ℝ) hu (tendsto_const_nhds (x := v) (f := atTop))).abs
-      rw [real_inner_self_eq_norm_sq, hv] at h
-      simpa using h
-    intro u' hu'
-    refine habsu.congr' ?_
-    filter_upwards [hu', huev, hlamzeta, hsimplep] with p h1 h2 h3 h4
-    obtain ⟨w₀, -, -, huniq₀⟩ := exists_unit_eigenvector_eq_or_neg (hA p) (hzetadef p).symm h4
-    rcases huniq₀ _ h2.2.1 (by rw [← h3]; exact h2.1) with h5 | h5 <;>
-      rcases huniq₀ _ h1.1 h1.2 with h6 | h6 <;>
-      simp [h5, h6, inner_neg_left, abs_neg]
+  · exact fun u hu => tendsto_abs_inner_of_tendsto_eigenvalue hconv hv hsimple hzeta hu
 
 end EigenpairConvergence
 

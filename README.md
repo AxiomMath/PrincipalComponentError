@@ -6,9 +6,9 @@ This is a Lean formalization of the asymptotic error of the sample principal dir
 
 ## Main Results
 
-* The error decomposition: the squared sine of the angle between the `j`-th sample principal direction and its target converges almost surely to an out-of-subspace error plus an in-subspace rotation error, assuming Kolmogorov's strong law, Weyl's perturbation inequality and eigenvector continuity at a simple eigenvalue.
+* The error decomposition: the squared sine of the angle between the `j`-th sample principal direction and its target converges almost surely to an out-of-subspace error plus an in-subspace rotation error, assuming Kolmogorov's strong law and Weyl's perturbation inequality.
 * The out-of-subspace error is estimable: the observable ratio of the average bulk eigenvalue to the `j`-th dual Gram eigenvalue converges to it almost surely, assuming Kolmogorov's strong law and Weyl's perturbation inequality.
-* The rotation error is not estimable: the data carry no factor covariance, and with at least two factors every value between the out-of-subspace floor and `1` is the limiting error of some admissible factor covariance.
+* The rotation error is not estimable: with at least two factors, every value between the out-of-subspace floor and `1` is the limiting error of some admissible factor covariance.
 
 See [§Formal Challenge](#formal-challenge) for a formal certificate.
 

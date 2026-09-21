@@ -194,12 +194,12 @@ theorem ae_tendsto_avgBulkEigenvalue_div_dualEigenvalues (hslln : KolmogorovSLLN
 section Floor
 
 variable (hslln : KolmogorovSLLN.{u}) (hweyl : WeylPerturbation.{0})
-  (heigcont : EigenpairContinuity.{0}) (hyp : StandingHypotheses μ M G lam) (j : Fin M.k)
+  (hyp : StandingHypotheses μ M G lam) (j : Fin M.k)
   {w : EuclideanSpace ℝ (Fin M.n)}
   (hw1 : ‖w‖ = 1) (hw : M.dualGramLim₀ G *ᵥ w = lam j • w) {ν : EuclideanSpace ℝ (Fin M.k)}
   (hν : M.scaledScoresLim *ᵥ w = Real.sqrt ((M.n : ℝ) * lam j) • ν)
 
-include hslln hweyl heigcont hyp hw1 hw hν
+include hslln hweyl hyp hw1 hw hν
 
 /-- **The estimate is a floor for the total error**: the limit `δ²/(nλⱼ+δ²)` of the observable
 ratio `ℓ⁽ᵖ⁾/θ⁽ᵖ⁾ⱼ` is at most the limit of the total error `sin²∠(h_j, b⁽ᵖ⁾ⱼ)`.
@@ -215,7 +215,7 @@ theorem ae_limUnder_avgBulkEigenvalue_div_le_limUnder_sinSqAngle :
   have hlam : 0 < lam j := hyp.hasPosEigenvalues_dualGramLim₀.pos j
   have hδ := M.δsq_pos
   filter_upwards [M.ae_tendsto_avgBulkEigenvalue_div_dualEigenvalues hslln hweyl hyp j,
-    M.ae_tendsto_sinSqAngle_principalDirection hslln hweyl heigcont hyp j hw1 hw hν]
+    M.ae_tendsto_sinSqAngle_principalDirection hslln hweyl hyp j hw1 hw hν]
     with ω hq hsin s
   rw [hq.limUnder_eq, (hsin s).limUnder_eq]
   exact le_add_of_nonneg_right (mul_nonneg (by positivity) (sinSqAngle_nonneg _ _))
@@ -232,7 +232,7 @@ theorem ae_limUnder_avgBulkEigenvalue_div_eq_limUnder_sinSqAngle_iff :
         ↔ sinSqAngle ν (EuclideanSpace.single j (1 : ℝ)) = 0) := by
   have hlam : 0 < lam j := hyp.hasPosEigenvalues_dualGramLim₀.pos j
   filter_upwards [M.ae_tendsto_avgBulkEigenvalue_div_dualEigenvalues hslln hweyl hyp j,
-    M.ae_tendsto_sinSqAngle_principalDirection hslln hweyl heigcont hyp j hw1 hw hν]
+    M.ae_tendsto_sinSqAngle_principalDirection hslln hweyl hyp j hw1 hw hν]
     with ω hq hsin s
   rw [hq.limUnder_eq, (hsin s).limUnder_eq]
   have hcoef : (0 : ℝ) < (M.n : ℝ) * lam j / ((M.n : ℝ) * lam j + M.δsq) :=
@@ -251,13 +251,13 @@ section Aggregate
 attribute [local instance] Matrix.frobeniusNormedAddCommGroup Matrix.frobeniusNormedSpace
 
 variable (hslln : KolmogorovSLLN.{u}) (hweyl : WeylPerturbation.{0})
-  (heigcont : EigenpairContinuity.{0}) (hyp : StandingHypotheses μ M G lam)
+  (hyp : StandingHypotheses μ M G lam)
   {w : Fin M.k → EuclideanSpace ℝ (Fin M.n)}
   (hw1 : ∀ j, ‖w j‖ = 1) (hw : ∀ j, M.dualGramLim₀ G *ᵥ w j = lam j • w j)
   {ν : Fin M.k → EuclideanSpace ℝ (Fin M.k)}
   (hν : ∀ j, M.scaledScoresLim *ᵥ w j = Real.sqrt ((M.n : ℝ) * lam j) • ν j)
 
-include hslln hweyl heigcont hyp hw1 hw hν
+include hslln hweyl hyp hw1 hw hν
 
 /-- **Aggregate out-of-subspace error**: almost surely
 `½‖Π_H - Π‖_F² → ∑ⱼ δ²/(nλⱼ+δ²)` for any frames `H⁽ᵖ⁾` with orthonormal columns collecting the
@@ -277,7 +277,7 @@ theorem ae_tendsto_frobenius_norm_frameProj_sub_sq_div_two :
       Tendsto (fun p => sinSqAngleSubspace (s.sample p) (M.principalSubspace p)) atTop
         (𝓝 (M.δsq / ((M.n : ℝ) * lam j + M.δsq))) :=
     ae_all_iff.mpr fun j =>
-      M.ae_tendsto_sinSqAngleSubspace hslln hweyl heigcont hyp j (hw1 j) (hw j) (hν j)
+      M.ae_tendsto_sinSqAngleSubspace hslln hweyl hyp j (hw1 j) (hw j) (hν j)
   have hunit : ∀ᵐ ω ∂μ, ∀ (j : Fin M.k) (s : M.PrincipalDirectionSeq j ω),
       ∀ᶠ p in atTop, ‖s.sample p‖ = 1 :=
     ae_all_iff.mpr (M.ae_eventually_norm_sample_eq_one hslln hweyl hyp)

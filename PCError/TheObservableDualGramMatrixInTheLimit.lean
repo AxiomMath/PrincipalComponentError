@@ -1149,8 +1149,7 @@ simple eigenvalue applies along `W⁽ᵖ⁾ → W`; the simple eigenvalue it pro
 `θ⁽ᵖ⁾ⱼ` itself, because the eigenvalues of `W` are separated. -/
 @[pcerror "prop_w_limit"]
 theorem ae_tendsto_abs_inner_dualEigenvector (hslln : KolmogorovSLLN.{u})
-    (hweyl : WeylPerturbation.{0}) (heigcont : EigenpairContinuity.{0})
-    (hyp : StandingHypotheses μ M G lam) (j : Fin M.k)
+    (hweyl : WeylPerturbation.{0}) (hyp : StandingHypotheses μ M G lam) (j : Fin M.k)
     {w : EuclideanSpace ℝ (Fin M.n)} (hw1 : ‖w‖ = 1)
     (hw : M.dualGramLim₀ G *ᵥ w = lam j • w) :
     ∀ᵐ ω ∂μ, ∀ u : ℕ → EuclideanSpace ℝ (Fin M.n),
@@ -1185,7 +1184,7 @@ theorem ae_tendsto_abs_inner_dualEigenvector (hslln : KolmogorovSLLN.{u})
     have e2 := eq_or_eq_neg_eigenvectorBasis hWH hi₁uniq hw1 hWw
     rcases e1 with h1 | h1 <;> rcases e2 with h2 | h2 <;> rw [h1, h2] <;> simp
   filter_upwards [M.ae_tendsto_dualGram hslln hyp] with ω hω
-  obtain ⟨zeta, hzeta, hspec, hconc⟩ := exists_tendsto_simple_eigenvalue hweyl heigcont
+  obtain ⟨zeta, hzeta, hspec, hconc⟩ := exists_tendsto_simple_eigenvalue hweyl
     (fun p => M.dualGram_isHermitian p ω) hWH hω hw1 hWw hsimple
   have hxspec : ∀ᶠ p in atTop, ∃ v : EuclideanSpace ℝ (Fin M.n), v ≠ 0 ∧
       M.dualGram p ω *ᵥ v = zeta p • v := by
